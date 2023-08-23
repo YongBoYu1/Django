@@ -21,5 +21,12 @@ class Post(models.Model):
     def __str__(self):
         return self.title
     
+    
     def get_absolute_url(self):
+        """The function required to redirect to the post detail after create
+            a new post
+
+        Returns:
+            str: The url
+        """ 
         return reverse('post-detail', kwargs={'pk': self.pk})

@@ -1,13 +1,15 @@
+from typing import Optional
 from django.forms.models import BaseModelForm
 from django.shortcuts import render
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.http import HttpResponse
 from .models import Post
 from django.views.generic import (
     ListView, 
     CreateView, 
     DetailView,
-    UpdateView
+    UpdateView,
+    DeleteView
 )
 
 # def home(request):
@@ -68,19 +70,48 @@ class PostCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
     
 
-class PostUpdateView(LoginRequiredMixin, UpdateView):
-    """The View to upate exist post 
+class PostUpdateView(LoginRequiredMixin, UserPassesTestMixin, UpdateView):
+    """_summary_
 
     Args:
-        CreateView (CreateView): The django creative view package
+        LoginRequiredMixin (_type_): _description_
+        UserPassesTestMixin (_type_): _description_
+        UpdateView (_type_): _description_
+
+    Returns:
+        _type_: _description_
     """
     model = Post
     # We only wish to modify title and content
     fields =['title', 'content']
+
     def form_valid(self, form: BaseModelForm) -> HttpResponse:
         form.instance.author = self.request.user #Route the author to the current login user
         return super().form_valid(form)
+    
+    def test_func(self):
+        # get the current post project
+        post = self.get_object()
+        if self.request.user == post.author:
+            return True
+        return False
+    
 
+class PostDeleteView(LoginRequiredMixin, UserPassesTestMixin, DeleteView):
+   
+    model = Post
+    success_url = '/'
+    def test_func(self):
+        """Test fuction if the user trying yo modified the post is the same as the login user
+
+        Returns:
+            bool: If the user passed the user test(Only)
+        """
+        # get the current post project
+        post = self.get_object()
+        if self.request.user == post.author:
+            return True
+        return False
 
 def about(request):
     return render(request, 'blog/about.html')
